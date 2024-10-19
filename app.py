@@ -3,52 +3,10 @@ import random
 import schemdraw
 import schemdraw.elements as elm
 from PIL import Image
+from io import BytesIO
 
-# Custom CSS for enhanced UI
-st.markdown("""
-    <style>
-    body {
-        background-color: #f0f4f7;
-        font-family: 'Arial', sans-serif;
-    }
-    .title {
-        color: #333;
-        font-size: 40px;
-        font-weight: bold;
-        text-align: center;
-        margin-bottom: 20px;
-    }
-    .stButton button {
-        background-color: #0073e6;
-        color: white;
-        border-radius: 10px;
-        padding: 10px 20px;
-        font-size: 20px;
-        margin: 10px;
-        transition: 0.3s;
-    }
-    .stButton button:hover {
-        background-color: #005bb5;
-    }
-    .result {
-        font-size: 24px;
-        font-weight: bold;
-        color: #0073e6;
-        margin: 20px 0;
-    }
-    .instruction {
-        font-size: 18px;
-        color: #555;
-        margin-bottom: 20px;
-    }
-    </style>
-""", unsafe_allow_html=True)
-
-# Title for the game
-st.markdown('<h1 class="title">Electrical Circuit Puzzle with Visuals</h1>', unsafe_allow_html=True)
-
-# Function to draw the circuit diagram
-def draw_circuit(component, config, values):
+# Function to draw and return the SVG circuit diagram
+def draw_circuit_svg(component, config, values):
     with schemdraw.Drawing() as d:
         if config == "Series":
             for i in range(3):
@@ -72,8 +30,9 @@ def draw_circuit(component, config, values):
                 d.add(elm.Line().left().tox(0))
                 d.pop()
             d.add(elm.Line().right())
-
-        d.save('circuit.png')
+        
+        # Return the SVG image data as bytes
+        return d.get_imagedata('svg')
 
 # Variables for gameplay
 if 'target_value' not in st.session_state:
@@ -137,12 +96,11 @@ else:  # Inductor
 unit = 'Ω' if component == 'Resistor' else ('F' if component == 'Capacitor' else 'H')
 st.markdown(f'<p class="result">Total {component} Value: {total_value:.2f}{unit}</p>', unsafe_allow_html=True)
 
-# Draw the circuit diagram based on user inputs
-draw_circuit(component, circuit_type, [comp1, comp2, comp3])
+# Draw the circuit diagram based on user inputs and display it
+circuit_svg = draw_circuit_svg(component, circuit_type, [comp1, comp2, comp3])
 
-# Load and display the circuit image
-image = Image.open('circuit.png')
-st.image(image, caption='Circuit Diagram')
+# Render the SVG image in the app
+st.image(BytesIO(circuit_svg), format='svg')
 
 # Button for submitting the guess
 if st.button('Submit Guess'):
