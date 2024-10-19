@@ -17,6 +17,7 @@ def draw_circuit_svg(component, circuit_type, values):
             elif component == 'Inductor':
                 d.add(elm.Inductor().label(f'{value}H'))
             d.add(elm.Line().right())
+    
     elif circuit_type == 'Parallel':
         d.add(elm.Line().down())
         for value in values:
@@ -28,6 +29,18 @@ def draw_circuit_svg(component, circuit_type, values):
             elif component == 'Inductor':
                 d.add(elm.Inductor().label(f'{value}H'))
             d.pop()
+            d.add(elm.Line().down())
+    
+    elif circuit_type == 'Hybrid':
+        # Hybrid circuits will include both series and parallel
+        d.add(elm.Line().down())
+        d.add(elm.Resistor().label(f'{values[0]}Ω'))
+        d.add(elm.Line().right())
+        d.add(elm.Capacitor().label(f'{values[1]}F'))
+        d.add(elm.Line().down())
+        d.add(elm.Inductor().label(f'{values[2]}H'))
+        d.add(elm.Line().left())
+        d.add(elm.Line().up())
 
     # Get SVG data from the drawing
     return d.get_imagedata('svg')
@@ -41,7 +54,7 @@ components = ['Resistor', 'Capacitor', 'Inductor']
 component = st.selectbox('Choose the component', components)
 
 # Circuit type options
-circuit_types = ['Series', 'Parallel']
+circuit_types = ['Series', 'Parallel', 'Hybrid']
 circuit_type = st.selectbox('Choose the circuit type', circuit_types)
 
 # User inputs for the individual component values
@@ -55,6 +68,10 @@ def calculate_total_value(circuit_type, component, values):
         return sum(values)
     elif circuit_type == 'Parallel':
         return 1 / sum(1 / v for v in values if v != 0)
+    elif circuit_type == 'Hybrid':
+        series_value = sum(values[:2])  # Assuming first two values are in series
+        parallel_value = 1 / sum(1 / v for v in values[1:] if v != 0)  # Last two in parallel
+        return series_value + parallel_value
 
 # Display the total value as a challenge to the user
 total_value = calculate_total_value(circuit_type, component, [comp1, comp2, comp3])
